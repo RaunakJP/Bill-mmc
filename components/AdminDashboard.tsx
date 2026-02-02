@@ -508,7 +508,7 @@ const AdminDashboard: React.FC<AdminProps> = ({
           <div className="animate-fadeIn space-y-8">
             <div className="flex justify-between items-center bg-white border-4 border-slate-900 p-8 rounded-[3rem] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mb-4">
                <h2 className="text-3xl font-black uppercase italic tracking-tighter">Hub Management</h2>
-               <button onClick={() => { setEditingCompany({ id: `comp-${Date.now()}`, name: '', nameSecondary: '', gstin: '', upiId: '', invoicePrefix: '', logoScale: 100 }); setShowCompanyModal(true); }} className="bg-indigo-600 text-white px-8 py-4 rounded-[2rem] font-black text-[10px] uppercase shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all">Add Company</button>
+               <button onClick={() => { setEditingCompany({ id: `comp-${Date.now()}`, name: '', nameSecondary: '', gstin: '', upiId: '', invoicePrefix: '', logoScale: 100, companyNameSize: 18, secondaryNameSize: 24, invoiceNumberSize: 14, itemNameSize: 9, isBoldItemNames: true }); setShowCompanyModal(true); }} className="bg-indigo-600 text-white px-8 py-4 rounded-[2rem] font-black text-[10px] uppercase shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all">Add Company</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {localSettings.companies.map(comp => (
@@ -574,7 +574,7 @@ const AdminDashboard: React.FC<AdminProps> = ({
 
       {showCompanyModal && (
         <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-[500] flex items-center justify-center p-6 animate-fadeIn">
-          <div className="bg-white w-full max-w-2xl rounded-[4rem] p-10 shadow-2xl relative border-4 border-indigo-600 animate-scaleIn overflow-y-auto max-h-[90vh]">
+          <div className="bg-white w-full max-w-2xl rounded-[4rem] p-10 shadow-2xl relative border-4 border-indigo-600 animate-scaleIn overflow-y-auto max-h-[90vh] custom-scrollbar">
             <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-8 px-4 text-center">Company Profile</h3>
             <form onSubmit={handleSaveCompany} className="space-y-6 px-4">
               <div className="flex flex-col items-center mb-6">
@@ -616,6 +616,52 @@ const AdminDashboard: React.FC<AdminProps> = ({
                   <input placeholder="Address Line 2" className="w-full p-4 bg-white border-2 border-slate-200 rounded-xl font-black text-[11px]" value={editingCompany?.addressLine2 || ''} onChange={e => setEditingCompany(prev => prev ? {...prev, addressLine2: e.target.value} : null)} />
                   <input placeholder="Contact Number" className="w-full p-4 bg-white border-2 border-slate-200 rounded-xl font-black text-[11px]" value={editingCompany?.contactNumber || ''} onChange={e => setEditingCompany(prev => prev ? {...prev, contactNumber: e.target.value} : null)} />
                   <input placeholder="Merchant UPI ID" className="w-full p-4 bg-white border-2 border-slate-200 rounded-xl font-black text-[11px]" value={editingCompany?.upiId || ''} onChange={e => setEditingCompany(prev => prev ? {...prev, upiId: e.target.value} : null)} />
+                </div>
+
+                {/* Typography Controls */}
+                <div className="p-6 bg-indigo-50/50 rounded-[2rem] border-2 border-indigo-100">
+                   <h4 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em] mb-6 flex items-center"><i className="fas fa-font mr-2"></i> Receipt Typography</h4>
+                   
+                   <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                      <div className="space-y-3">
+                         <div className="flex justify-between">
+                            <label className="text-[8px] font-black text-slate-500 uppercase">Primary Name Size</label>
+                            <span className="text-[8px] font-black text-indigo-600">{editingCompany?.companyNameSize || 14}px</span>
+                         </div>
+                         <input type="range" min="10" max="24" className="w-full accent-indigo-600" value={editingCompany?.companyNameSize || 14} onChange={e => setEditingCompany(prev => prev ? {...prev, companyNameSize: parseInt(e.target.value)} : null)} />
+                      </div>
+
+                      <div className="space-y-3">
+                         <div className="flex justify-between">
+                            <label className="text-[8px] font-black text-slate-500 uppercase">Regional Name Size</label>
+                            <span className="text-[8px] font-black text-indigo-600">{editingCompany?.secondaryNameSize || 20}px</span>
+                         </div>
+                         <input type="range" min="14" max="32" className="w-full accent-indigo-600" value={editingCompany?.secondaryNameSize || 20} onChange={e => setEditingCompany(prev => prev ? {...prev, secondaryNameSize: parseInt(e.target.value)} : null)} />
+                      </div>
+
+                      <div className="space-y-3">
+                         <div className="flex justify-between">
+                            <label className="text-[8px] font-black text-slate-500 uppercase">Inv Number Size</label>
+                            <span className="text-[8px] font-black text-indigo-600">{editingCompany?.invoiceNumberSize || 14}px</span>
+                         </div>
+                         <input type="range" min="10" max="20" className="w-full accent-indigo-600" value={editingCompany?.invoiceNumberSize || 14} onChange={e => setEditingCompany(prev => prev ? {...prev, invoiceNumberSize: parseInt(e.target.value)} : null)} />
+                      </div>
+
+                      <div className="space-y-3">
+                         <div className="flex justify-between">
+                            <label className="text-[8px] font-black text-slate-500 uppercase">Item Names Size</label>
+                            <span className="text-[8px] font-black text-indigo-600">{editingCompany?.itemNameSize || 9}px</span>
+                         </div>
+                         <input type="range" min="7" max="14" className="w-full accent-indigo-600" value={editingCompany?.itemNameSize || 9} onChange={e => setEditingCompany(prev => prev ? {...prev, itemNameSize: parseInt(e.target.value)} : null)} />
+                      </div>
+                   </div>
+
+                   <div className="mt-6 pt-4 border-t border-indigo-100 flex items-center justify-between">
+                      <span className="text-[8px] font-black text-slate-500 uppercase">Bold Item Names</span>
+                      <button type="button" onClick={() => setEditingCompany(prev => prev ? {...prev, isBoldItemNames: !prev.isBoldItemNames} : null)} className={`w-12 h-6 rounded-full transition-all relative ${editingCompany?.isBoldItemNames ? 'bg-indigo-600' : 'bg-slate-200'}`}>
+                         <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${editingCompany?.isBoldItemNames ? 'right-1' : 'left-1'}`}></div>
+                      </button>
+                   </div>
                 </div>
               </div>
 

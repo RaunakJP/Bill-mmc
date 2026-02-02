@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { User, Product, Invoice, AppSettings, InvoiceItem, PrinterConfig, Company } from '../types';
 import Receipt from './Receipt';
@@ -35,6 +36,21 @@ const DevicePOS: React.FC<POSProps> = ({ user, products, settings, onLogout, onS
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
   
+  // Printer States
+  const [showPrinterModal, setShowPrinterModal] = useState(false);
+  const [printerConfig, setPrinterConfig] = useState<PrinterConfig>(() => {
+    const saved = localStorage.getItem(`bb_printer_${user.id}`);
+    return saved ? JSON.parse(saved) : {
+      paperWidth: '80mm',
+      autoPrint: false,
+      showQr: true,
+      topMargin: 0,
+      connectionType: 'SYSTEM'
+    };
+  });
+  const [isBluetoothConnecting, setIsBluetoothConnecting] = useState(false);
+  const [bluetoothDevice, setBluetoothDevice] = useState<any>(null);
+
   const cartContainerRef = useRef<HTMLDivElement>(null);
   const [pendingProduct, setPendingProduct] = useState<Product | null>(null);
   const [entryQty, setEntryQty] = useState<string>('1');
@@ -44,6 +60,10 @@ const DevicePOS: React.FC<POSProps> = ({ user, products, settings, onLogout, onS
   useEffect(() => {
     localStorage.setItem('bb_pos_cart_v2', JSON.stringify(cart));
   }, [cart]);
+
+  useEffect(() => {
+    localStorage.setItem(`bb_printer_${user.id}`, JSON.stringify(printerConfig));
+  }, [printerConfig, user.id]);
 
   const activeCompany = useMemo(() => {
     return settings.companies.find(c => c.id === settings.activeCompanyId) || settings.companies[0];
@@ -70,6 +90,31 @@ const DevicePOS: React.FC<POSProps> = ({ user, products, settings, onLogout, onS
     setPendingProduct(p);
     setEntryQty('1');
     setEntryPrice(p.price.toString());
+  };
+
+  const connectBluetooth = async () => {
+    if (!('bluetooth' in navigator)) {
+      alert("Bluetooth is not supported in this browser. Try Chrome or Edge.");
+      return;
+    }
+    setIsBluetoothConnecting(true);
+    try {
+      const device = await (navigator as any).bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] // Common printer service
+      });
+      setBluetoothDevice(device);
+      setPrinterConfig(prev => ({ 
+        ...prev, 
+        connectionType: 'BLUETOOTH',
+        bluetoothDeviceId: device.id 
+      }));
+      console.log('Bluetooth Printer Connected:', device.name);
+    } catch (error) {
+      console.error('Bluetooth connection failed:', error);
+    } finally {
+      setIsBluetoothConnecting(false);
+    }
   };
 
   const confirmAddToCart = () => {
@@ -159,7 +204,13 @@ const DevicePOS: React.FC<POSProps> = ({ user, products, settings, onLogout, onS
       termsLine1: activeCompany.termsLine1,
       termsLine2: activeCompany.termsLine2,
       thankYouEmojiStart: activeCompany.thankYouEmojiStart,
-      thankYouEmojiEnd: activeCompany.thankYouEmojiEnd
+      thankYouEmojiEnd: activeCompany.thankYouEmojiEnd,
+      // Typography Snapshots
+      companyNameSize: activeCompany.companyNameSize,
+      secondaryNameSize: activeCompany.secondaryNameSize,
+      invoiceNumberSize: activeCompany.invoiceNumberSize,
+      itemNameSize: activeCompany.itemNameSize,
+      isBoldItemNames: activeCompany.isBoldItemNames
     };
     onSaveInvoice(newInvoice);
     setCurrentReceipt(newInvoice);
@@ -197,6 +248,17 @@ const DevicePOS: React.FC<POSProps> = ({ user, products, settings, onLogout, onS
         </div>
 
         <div className="flex items-center space-x-3">
+          <button 
+            onClick={() => setShowPrinterModal(true)}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+              printerConfig.connectionType === 'SYSTEM' ? 'bg-slate-100 text-slate-400' : 
+              printerConfig.connectionType === 'BLUETOOTH' ? 'bg-blue-600 text-white shadow-lg' : 
+              'bg-emerald-600 text-white shadow-lg'
+            }`}
+            title="Printer Settings"
+          >
+            <i className={`fas fa-${printerConfig.connectionType === 'BLUETOOTH' ? 'bluetooth' : printerConfig.connectionType === 'NETWORK' ? 'wifi' : 'print'}`}></i>
+          </button>
           <button onClick={onLogout} className="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-[9px] font-black uppercase">Sign Out</button>
         </div>
       </header>
@@ -339,6 +401,106 @@ const DevicePOS: React.FC<POSProps> = ({ user, products, settings, onLogout, onS
         </div>
       </div>
 
+      {showPrinterModal && (
+        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[500] flex items-center justify-center p-6 animate-fadeIn">
+          <div className="bg-white w-full max-md:max-w-xs rounded-[3rem] p-10 shadow-2xl relative border-4 border-indigo-600 animate-slideUp">
+            <button 
+              onClick={() => setShowPrinterModal(false)}
+              className="absolute top-8 right-8 text-slate-400 hover:text-slate-900"
+            >
+              <i className="fas fa-times"></i>
+            </button>
+            
+            <h3 className="text-2xl font-black uppercase italic tracking-tighter text-slate-900 mb-8">Printer Hub</h3>
+            
+            <div className="space-y-6">
+              <div className="grid grid-cols-3 gap-3">
+                <button 
+                  onClick={() => setPrinterConfig(p => ({ ...p, connectionType: 'SYSTEM' }))}
+                  className={`py-4 rounded-2xl flex flex-col items-center border-4 transition-all ${printerConfig.connectionType === 'SYSTEM' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-100 opacity-60'}`}
+                >
+                  <i className="fas fa-desktop text-sm mb-2"></i>
+                  <span className="text-[8px] font-black uppercase">System</span>
+                </button>
+                <button 
+                  onClick={() => setPrinterConfig(p => ({ ...p, connectionType: 'BLUETOOTH' }))}
+                  className={`py-4 rounded-2xl flex flex-col items-center border-4 transition-all ${printerConfig.connectionType === 'BLUETOOTH' ? 'border-blue-600 bg-blue-50' : 'border-slate-100 opacity-60'}`}
+                >
+                  <i className="fab fa-bluetooth text-sm mb-2"></i>
+                  <span className="text-[8px] font-black uppercase">Bluetooth</span>
+                </button>
+                <button 
+                  onClick={() => setPrinterConfig(p => ({ ...p, connectionType: 'NETWORK' }))}
+                  className={`py-4 rounded-2xl flex flex-col items-center border-4 transition-all ${printerConfig.connectionType === 'NETWORK' ? 'border-emerald-600 bg-emerald-50' : 'border-slate-100 opacity-60'}`}
+                >
+                  <i className="fas fa-wifi text-sm mb-2"></i>
+                  <span className="text-[8px] font-black uppercase">Network</span>
+                </button>
+              </div>
+
+              {printerConfig.connectionType === 'BLUETOOTH' && (
+                <div className="bg-blue-50 p-6 rounded-3xl border-2 border-blue-100">
+                  <p className="text-[9px] font-black text-blue-800 uppercase mb-4">Nearby Wireless Printers</p>
+                  <button 
+                    onClick={connectBluetooth}
+                    disabled={isBluetoothConnecting}
+                    className="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-[10px] uppercase shadow-lg shadow-blue-200"
+                  >
+                    {isBluetoothConnecting ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-search mr-2"></i>}
+                    {bluetoothDevice ? `Connected: ${bluetoothDevice.name || 'Printer'}` : 'Search Devices'}
+                  </button>
+                </div>
+              )}
+
+              {printerConfig.connectionType === 'NETWORK' && (
+                <div className="bg-emerald-50 p-6 rounded-3xl border-2 border-emerald-100">
+                   <p className="text-[9px] font-black text-emerald-800 uppercase mb-4">Static IP Configuration</p>
+                   <input 
+                    type="text" 
+                    placeholder="E.g., 192.168.1.100" 
+                    className="w-full p-4 bg-white border-2 border-emerald-200 rounded-xl font-black text-sm outline-none focus:border-emerald-600 mb-3"
+                    value={printerConfig.networkIp || ''}
+                    onChange={(e) => setPrinterConfig(p => ({ ...p, networkIp: e.target.value }))}
+                   />
+                   <button className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-[10px] uppercase">Test Connection</button>
+                </div>
+              )}
+
+              <div className="pt-4 border-t-2 border-slate-50 grid grid-cols-2 gap-4">
+                <div>
+                   <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Paper Width</label>
+                   <select 
+                    className="w-full p-3 bg-slate-50 border-2 border-slate-900 rounded-xl font-black text-[10px] uppercase"
+                    value={printerConfig.paperWidth}
+                    onChange={(e) => setPrinterConfig(p => ({ ...p, paperWidth: e.target.value as any }))}
+                   >
+                     <option value="58mm">58mm</option>
+                     <option value="70mm">70mm</option>
+                     <option value="80mm">80mm</option>
+                   </select>
+                </div>
+                <div>
+                   <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Auto-Print</label>
+                   <button 
+                    onClick={() => setPrinterConfig(p => ({ ...p, autoPrint: !p.autoPrint }))}
+                    className={`w-full p-3 rounded-xl font-black text-[10px] uppercase border-2 transition-all ${printerConfig.autoPrint ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-900 text-slate-900'}`}
+                   >
+                     {printerConfig.autoPrint ? 'ON' : 'OFF'}
+                   </button>
+                </div>
+              </div>
+            </div>
+            
+            <button 
+              onClick={() => setShowPrinterModal(false)}
+              className="w-full bg-slate-900 text-white py-5 rounded-[2rem] font-black uppercase text-[11px] mt-8 shadow-xl"
+            >
+              Update Preferences
+            </button>
+          </div>
+        </div>
+      )}
+
       {pendingProduct && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 shadow-2xl border-4 border-indigo-600">
@@ -378,7 +540,7 @@ const DevicePOS: React.FC<POSProps> = ({ user, products, settings, onLogout, onS
         </div>
       )}
 
-      {currentReceipt && <Receipt invoice={currentReceipt} onClose={() => setCurrentReceipt(null)} />}
+      {currentReceipt && <Receipt invoice={currentReceipt} printerConfig={printerConfig} onClose={() => setCurrentReceipt(null)} />}
 
       <style>{`
         @keyframes slideInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

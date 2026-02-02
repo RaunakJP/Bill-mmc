@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { Invoice, PrinterConfig } from '../types';
 
@@ -66,8 +67,20 @@ const Receipt: React.FC<ReceiptProps> = ({ invoice, printerConfig, onClose }) =>
         )}
 
         <div className="text-center mb-4 space-y-1">
-          {localInvoice.companyNameSecondary && <h1 className="text-lg font-black leading-none mb-1">{localInvoice.companyNameSecondary}</h1>}
-          <h2 className="font-black uppercase tracking-tight text-sm leading-tight">{localInvoice.companyName || 'RETAIL INVOICE'}</h2>
+          {localInvoice.companyNameSecondary && (
+            <h1 
+              style={{ fontSize: `${localInvoice.secondaryNameSize || 18}px` }} 
+              className="font-black leading-none mb-1"
+            >
+              {localInvoice.companyNameSecondary}
+            </h1>
+          )}
+          <h2 
+            style={{ fontSize: `${localInvoice.companyNameSize || 14}px` }} 
+            className="font-black uppercase tracking-tight leading-tight"
+          >
+            {localInvoice.companyName || 'RETAIL INVOICE'}
+          </h2>
           
           <div className="mt-2 space-y-0.5 text-[7px] font-black uppercase tracking-tight border-t border-slate-100 pt-1 opacity-70">
             {localInvoice.addressLine1 && <p>{localInvoice.addressLine1}</p>}
@@ -78,16 +91,21 @@ const Receipt: React.FC<ReceiptProps> = ({ invoice, printerConfig, onClose }) =>
         </div>
 
         <div className="flex justify-between items-start border-b border-dashed border-slate-400 pb-2 mb-3 uppercase">
-          <span className="text-[14px] font-black tracking-tight leading-none">#{localInvoice.invoiceNumber}</span>
+          <span 
+            style={{ fontSize: `${localInvoice.invoiceNumberSize || 14}px` }} 
+            className="font-black tracking-tight leading-none"
+          >
+            #{localInvoice.invoiceNumber}
+          </span>
           <div className="text-right flex flex-col items-end">
             <span className="text-[12px] font-black tracking-tight leading-none">{formattedDate}</span>
             <span className="text-[7px] font-bold opacity-60 mt-1">{formattedTime}</span>
           </div>
         </div>
 
-        <table className="w-full mb-3 text-[9px]">
+        <table className="w-full mb-3">
           <thead>
-            <tr className="border-b-2 border-slate-900 font-black uppercase text-left">
+            <tr className="border-b-2 border-slate-900 font-black uppercase text-left text-[9px]">
               <th className="py-1">Item</th>
               <th className="py-1 text-center">Qty</th>
               <th className="py-1 text-center">Rate</th>
@@ -97,12 +115,18 @@ const Receipt: React.FC<ReceiptProps> = ({ invoice, printerConfig, onClose }) =>
           <tbody>
             {localInvoice.items.map((item, idx) => (
               <tr key={idx} className="border-b border-dotted border-slate-300 align-top">
-                <td className="py-2 pr-1 font-black uppercase">
+                <td 
+                  style={{ 
+                    fontSize: `${localInvoice.itemNameSize || 9}px`,
+                    fontWeight: localInvoice.isBoldItemNames ? '900' : 'normal'
+                  }} 
+                  className="py-2 pr-1 uppercase"
+                >
                   {item.name}
                 </td>
-                <td className="py-2 text-center font-bold whitespace-nowrap">{formatQuantity(item.quantity, item.unit)}</td>
-                <td className="py-2 text-center font-bold whitespace-nowrap">{item.price.toFixed(2)}</td>
-                <td className="py-2 text-right font-black whitespace-nowrap">{item.total.toFixed(2)}</td>
+                <td className="py-2 text-center font-bold whitespace-nowrap text-[9px]">{formatQuantity(item.quantity, item.unit)}</td>
+                <td className="py-2 text-center font-bold whitespace-nowrap text-[9px]">{item.price.toFixed(2)}</td>
+                <td className="py-2 text-right font-black whitespace-nowrap text-[9px]">{item.total.toFixed(2)}</td>
               </tr>
             ))}
           </tbody>

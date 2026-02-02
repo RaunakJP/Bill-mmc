@@ -3,7 +3,7 @@ export interface Company {
   id: string;
   name?: string; 
   nameSecondary?: string; 
-  headerTopLine?: string; // Tagline like "Om Namah Shivay"
+  headerTopLine?: string; 
   gstin: string;
   upiId: string;
   invoicePrefix: string;
@@ -17,6 +17,12 @@ export interface Company {
   termsLine2?: string;
   thankYouEmojiStart?: string;
   thankYouEmojiEnd?: string;
+  // Typography Settings
+  companyNameSize?: number;
+  secondaryNameSize?: number;
+  invoiceNumberSize?: number;
+  itemNameSize?: number;
+  isBoldItemNames?: boolean;
 }
 
 export interface Product {
@@ -94,6 +100,12 @@ export interface Invoice {
   termsLine2?: string;
   thankYouEmojiStart?: string;
   thankYouEmojiEnd?: string;
+  // Snapshot of styles
+  companyNameSize?: number;
+  secondaryNameSize?: number;
+  invoiceNumberSize?: number;
+  itemNameSize?: number;
+  isBoldItemNames?: boolean;
 }
 
 export interface AppSettings {
