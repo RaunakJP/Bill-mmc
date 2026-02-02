@@ -118,7 +118,14 @@ export interface AppSettings {
 export type ViewState = 'login' | 'admin' | 'pos';
 
 export interface SyncMessage {
-  type: 'CATALOG_UPDATE' | 'SETTINGS_UPDATE' | 'USER_UPDATE' | 'INVOICE_NEW' | 'HEARTBEAT';
+  type: 'CATALOG_UPDATE' | 'SETTINGS_UPDATE' | 'USER_UPDATE' | 'INVOICE_NEW' | 'HEARTBEAT' | 'HANDSHAKE' | 'SYNC_REQUEST';
   payload: any;
   senderId: string;
+}
+
+export interface SyncStatus {
+  hubId: string | null;
+  isSyncing: boolean;
+  connectedPeers: string[];
+  lastSync?: string;
 }
