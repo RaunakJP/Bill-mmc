@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'bharatbill-v20-core';
+const CACHE_NAME = 'bharatbill-v21-prod';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -24,16 +24,21 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Stale-while-revalidate strategy for maximum efficiency
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') return response;
-        const cacheCopy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cacheCopy));
+      const networked = fetch(event.request).then((response) => {
+        if (response && response.status === 200) {
+          const cacheCopy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cacheCopy));
+        }
         return response;
-      });
+      }).catch(() => null);
+
+      return cached || networked;
     })
   );
 });
